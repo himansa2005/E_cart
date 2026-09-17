@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Field &amp; Form | Everyday goods</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="wordmark" href="{{ url_for('index') }}"><span>F</span> Field &amp; Form</a>
+        <p class="header-note">Useful things, beautifully made.</p>
+        <a class="bag-link" href="#bag">Bag <span>{{ items|sum(attribute='quantity') }}</span></a>
+    </header>
+
+    <main>
+        <section class="intro">
+            <div>
+                <p class="kicker">SPRING EDIT / 2026</p>
+                <h1>Objects for<br><em>everyday living.</em></h1>
+            </div>
+            <p class="intro-copy">A considered collection of durable goods for workdays, weekends, and all the moments in between.</p>
+        </section>
+
+        {% if message %}<div class="flash flash-{{ message[0] }}">{{ message[1] }}</div>{% endif %}
+
+        <section class="shop-grid" id="collection" aria-label="Product collection">
+            {% for product in products %}
+            <article class="product-card">
+                <div class="product-art art-{{ product.color }}">
+                    <span class="product-tag">{{ product.tag }}</span>
+                    <span class="art-symbol">{{ loop.index }}</span>
+                </div>
+                <div class="product-info">
+                    <div><p class="category">{{ product.category }}</p><h2>{{ product.name }}</h2></div>
+                    <strong>${{ '%.2f'|format(product.price) }}</strong>
+                </div>
+                <form action="{{ url_for('add_item') }}" method="post" class="add-form">
+                    <input type="hidden" name="product" value="{{ loop.index0 }}">
+                    <label class="quantity"><span>Qty</span><input type="number" name="quantity" value="1" min="1" max="20"></label>
+                    <button type="submit">Add to bag <span>+</span></button>
+                </form>
+            </article>
+            {% endfor %}
+        </section>
+
+        <section class="bag-section" id="bag">
+            <div class="section-title"><div><p class="kicker">YOUR SELECTION</p><h2>Shopping bag</h2></div><span>{{ items|length }} item{% if items|length != 1 %}s{% endif %}</span></div>
+            {% if items %}
+            <div class="bag-layout">
+                <div class="bag-items">
+                    {% for item in items %}
+                    <div class="bag-item">
+                        <div class="mini-art art-{{ ['sand', 'blue', 'clay', 'green'][loop.index0 % 4] }}">{{ loop.index }}</div>
+                        <div class="bag-name"><h3>{{ item.name }}</h3><span>${{ '%.2f'|format(item.price) }} each</span></div>
+                        <form action="{{ url_for('update_item') }}" method="post" class="update-form">
+                            <input type="hidden" name="name" value="{{ item.name }}">
+                            <input aria-label="Quantity for {{ item.name }}" type="number" name="quantity" value="{{ item.quantity }}" min="0" max="20" onchange="this.form.submit()">
+                        </form>
+                        <strong class="line-total">${{ '%.2f'|format(item.price * item.quantity) }}</strong>
+                    </div>
+                    {% endfor %}
+                    <form action="{{ url_for('clear_cart') }}" method="post"><button class="text-button" type="submit">Clear bag</button></form>
+                </div>
+                <aside class="summary">
+                    <div class="summary-head"><h3>Summary</h3><span>USD</span></div>
+                    <div class="summary-row"><span>Subtotal</span><strong>${{ '%.2f'|format(totals.subtotal) }}</strong></div>
+                    {% if totals.discount %}<div class="summary-row discount"><span>Member discount</span><strong>-${{ '%.2f'|format(totals.discount) }}</strong></div>{% endif %}
+                    <div class="summary-row"><span>Tax (10%)</span><strong>${{ '%.2f'|format(totals.tax) }}</strong></div>
+                    <div class="total-row"><span>Total</span><strong>${{ '%.2f'|format(totals.total) }}</strong></div>
+                    <form action="{{ url_for('apply_coupon') }}" method="post" class="coupon-form"><label for="code">Have a coupon?</label><div><input id="code" name="code" value="{{ coupon }}" placeholder="Enter code"><button type="submit" aria-label="Apply coupon">→</button></div></form>
+                    <form action="{{ url_for('checkout') }}" method="post"><button class="checkout" type="submit">Continue to checkout <span>↗</span></button></form>
+                </aside>
+            </div>
+            {% else %}<div class="empty-bag"><span>○</span><p>Your bag is waiting for something good.</p><a href="#collection">Browse the collection</a></div>{% endif %}
+        </section>
+    </main>
+    <footer><span>FIELD &amp; FORM / 2026</span><span>Made for the daily ritual.</span></footer>
+</body>
+</html>
